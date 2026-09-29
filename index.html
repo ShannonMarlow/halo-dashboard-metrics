@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Halo Dashboard Metrics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: reference sheet. Sticky panel index on the left, one entry per dashboard panel on the right; stacks on phones. */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --ink: #16202c;
+  --ink-2: #4a5666;
+  --rule: #dde2e8;
+  --accent: #2a6fc4;
+  --accent-soft: #e7f0fb;
+  --warn: #9a5b00;
+  --warn-soft: #fbf1df;
+  --code-bg: #f0f3f6;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12171d; --surface: #1a2129; --ink: #e8edf2; --ink-2: #a7b3c1; --rule: #2c3642;
+    --accent: #6ea8ec; --accent-soft: #1c2d42; --warn: #e2a64a; --warn-soft: #33281a; --code-bg: #222b35;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12171d; --surface: #1a2129; --ink: #e8edf2; --ink-2: #a7b3c1; --rule: #2c3642;
+  --accent: #6ea8ec; --accent-soft: #1c2d42; --warn: #e2a64a; --warn-soft: #33281a; --code-bg: #222b35;
+  color-scheme: dark;
+}
+
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15.5px; line-height: 1.6; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 72px; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.25; margin: 0; }
+p { margin: 0; }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
+a { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+header.intro { display: grid; gap: 12px; max-width: 68ch; margin-bottom: 36px; }
+.eyebrow { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); font-weight: 500; }
+h1 { font-size: 2rem; font-weight: 600; }
+.intro p { color: var(--ink-2); }
+.meta { font-size: 0.85rem; color: var(--ink-2); }
+
+.layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 40px; align-items: start; }
+nav.index { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); display: grid; gap: 14px; font-size: 0.88rem; }
+nav.index .grp { display: grid; gap: 4px; }
+nav.index .grp-title { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); font-weight: 500; margin-bottom: 2px; }
+nav.index a { color: var(--ink); text-decoration: none; padding: 2px 0; }
+nav.index a:hover { color: var(--accent); }
+
+main { display: grid; gap: 40px; min-width: 0; }
+.section-head { display: grid; gap: 6px; padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
+.section-head h2 { font-size: 1.3rem; font-weight: 600; }
+.section-head p { color: var(--ink-2); font-size: 0.93rem; }
+section.group { display: grid; gap: 18px; }
+
+.rules { display: grid; gap: 12px; counter-reset: rule; padding: 0; margin: 0; list-style: none; }
+.rules li { display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: 10px; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; }
+.rules li::before { counter-increment: rule; content: counter(rule); font-family: var(--font-mono); font-weight: 500; color: var(--accent); }
+.rules strong { font-weight: 600; }
+.rules li.unverified { background: var(--warn-soft); border-color: transparent; }
+.rules li.unverified::before { color: var(--warn); }
+.tag { display: inline-block; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; color: var(--warn); margin-left: 6px; }
+
+article.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 20px 22px; display: grid; gap: 14px; scroll-margin-top: 20px; }
+article.panel h3 { font-size: 1.08rem; font-weight: 600; }
+.kind { font-size: 0.78rem; color: var(--ink-2); font-weight: 400; margin-left: 8px; letter-spacing: 0.02em; }
+.panel > p { max-width: 70ch; }
+dl.calc { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; margin: 0; font-size: 0.93rem; }
+dl.calc dt { color: var(--ink-2); font-weight: 500; }
+dl.calc dd { margin: 0; min-width: 0; }
+.formula { font-family: var(--font-mono); font-size: 0.86rem; background: var(--code-bg); padding: 2px 8px; border-radius: 4px; display: inline-block; }
+.api { font-family: var(--font-mono); font-size: 0.8rem; background: var(--code-bg); border-radius: 6px; padding: 8px 10px; overflow-x: auto; white-space: pre; display: block; }
+.compare { background: var(--accent-soft); border-radius: 6px; padding: 10px 14px; font-size: 0.92rem; display: grid; gap: 4px; }
+.compare b { font-weight: 600; color: var(--accent); font-size: 0.75rem; letter-spacing: 0.07em; text-transform: uppercase; }
+.compare ul { margin: 0; padding-left: 1.1em; display: grid; gap: 2px; }
+.nums { font-variant-numeric: tabular-nums; }
+
+footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--rule); color: var(--ink-2); font-size: 0.86rem; max-width: 70ch; }
+
+@media (max-width: 820px) {
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  nav.index { position: static; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; }
+  dl.calc { grid-template-columns: minmax(0, 1fr); gap: 2px 0; }
+  dl.calc dd { margin-bottom: 8px; }
+  h1 { font-size: 1.6rem; }
+}
+body { margin: 0; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="intro">
+    <span class="eyebrow">Grafana · Halo Service Desk dashboard</span>
+    <h1>How each number is calculated</h1>
+    <p>Each panel's definition, read from the dashboard as it is deployed. Use it to compare the dashboard with Halo reports or other figures you already have.</p>
+    <p class="meta">All figures come from the Halo REST API. The dashboard does the counting itself; nothing is stored.</p>
+  </header>
+
+  <div class="layout">
+    <nav class="index" aria-label="Panels">
+      <div class="grp">
+        <span class="grp-title">Start here</span>
+        <a href="#rules">Rules that apply to every panel</a>
+      </div>
+      <div class="grp">
+        <span class="grp-title">The month</span>
+        <a href="#opened">Tickets opened in the month</a>
+        <a href="#rate">Closure rate</a>
+        <a href="#closures">All closures in the month</a>
+        <a href="#daily">Opened and closed per day</a>
+      </div>
+      <div class="grp">
+        <span class="grp-title">Right now</span>
+        <a href="#status">Open tickets by status</a>
+        <a href="#agent">Open tickets per agent</a>
+        <a href="#agenttable">Open tickets per agent (numbers)</a>
+        <a href="#waiting">Waiting: On Hold and With User</a>
+      </div>
+    </nav>
+
+    <main>
+      <section class="group" id="rules">
+        <div class="section-head">
+          <h2>Rules that apply to every panel</h2>
+          <p>A difference from your existing figures most likely comes from one of these.</p>
+        </div>
+        <ol class="rules">
+          <li><p><strong>Team filter.</strong> The default is <strong>Service Desk only</strong>. It matches the ticket's <em>current</em> team, not the team it was raised in. A ticket moved from Service Desk to another team leaves every count. Pick <em>All</em> in the Team dropdown to include every team.</p></li>
+          <li><p><strong>All ticket types count.</strong> Incidents, service requests, change requests and every other type are included. There is no ticket-type filter.</p></li>
+          <li><p><strong>Month boundaries are UK time.</strong> "This month" runs from 00:00 on the 1st, UK time, to now. It is sent to Halo in UTC, so a month starting in BST begins at 23:00 UTC on the last day of the previous month. A report that uses UTC midnight differs by one hour at each end of the month.</p></li>
+          <li><p><strong>"Closed" means current status is Closed (status ID 9)</strong>, nothing else. A ticket closed and then reopened counts as open. Rejected, With Supplier and every other status count as not closed.</p></li>
+          <li><p><strong>Visibility.</strong> Counts cover only tickets that the agent the API application logs in as can see in Halo. If its role or team access is narrower than yours, its counts are lower.</p></li>
+          <li class="unverified"><p><strong>Child tickets may be left out.</strong><span class="tag">Not checked</span> Halo's response carries <code>include_children: false</code>, so child tickets may be excluded by default. If your figures include child tickets, this could explain the gap.</p></li>
+        </ol>
+      </section>
+
+      <section class="group">
+        <div class="section-head">
+          <h2>The month</h2>
+          <p>These panels follow the time picker. The dashboard opens on <em>This month so far</em>; choose <em>Previous month</em> to see the last full month.</p>
+        </div>
+
+        <article class="panel" id="opened">
+          <h3>Tickets opened in the month <span class="kind">stat · 3 numbers</span></h3>
+          <p>One API call fetches every ticket <strong>raised</strong> in the selected period. The dashboard keeps tickets in the selected team(s) and counts them.</p>
+          <dl class="calc">
+            <dt>Opened</dt><dd>Tickets whose raised date (<code>dateoccurred</code>) falls in the period.</dd>
+            <dt>Closed</dt><dd>Of those, how many are <strong>currently</strong> in status Closed (9). A ticket raised this month is counted here only once it is closed, even if that happens next month.</dd>
+            <dt>Still open</dt><dd><span class="formula">Opened − Closed</span>. This includes Rejected, With Supplier and every other status that is not Closed.</dd>
+          </dl>
+          <code class="api">GET /api/Tickets?count=10000&amp;datesearch=dateoccurred&amp;startdate={period start}&amp;enddate={period end}</code>
+          <div class="compare"><b>When comparing</b>
+            <ul>
+              <li>A Halo report of "tickets closed this month" is not this number. For that, see <a href="#closures">All closures in the month</a>.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="panel" id="rate">
+          <h3>Closure rate <span class="kind">gauge</span></h3>
+          <p>Reuses the numbers from <em>Tickets opened in the month</em>; there is no separate query.</p>
+          <dl class="calc">
+            <dt>Formula</dt><dd><span class="formula">Closed ÷ Opened × 100</span>, rounded to 1 decimal place. Shows 0 when nothing was opened.</dd>
+            <dt>Colours</dt><dd>Red below 50 %, orange from 50 %, green from 75 %.</dd>
+          </dl>
+          <div class="compare"><b>When comparing</b>
+            <ul>
+              <li>It counts only tickets <em>raised in the period</em>. It is not "all closures ÷ all tickets opened", which would include backlog closures.</li>
+              <li>Example: 75 closed out of 100 opened gives <span class="nums">75.0 %</span>.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="panel" id="closures">
+          <h3>All closures in the month <span class="kind">stat · 2 numbers</span></h3>
+          <p>A separate API call fetches every ticket <strong>closed</strong> in the period, whenever it was raised, then keeps the selected team(s).</p>
+          <dl class="calc">
+            <dt>Closed</dt><dd>Tickets whose closed date (<code>dateclosed</code>) falls in the period.</dd>
+            <dt>…opened in an earlier month</dt><dd>Of those, how many were raised before the period started: the backlog cleared.</dd>
+          </dl>
+          <code class="api">GET /api/Tickets?count=10000&amp;datesearch=dateclosed&amp;startdate={period start}&amp;enddate={period end}</code>
+          <div class="compare"><b>When comparing</b>
+            <ul>
+              <li>This is the closest match to a "closed this month" figure in Halo.</li>
+              <li>A ticket closed in the period counts here even if it has since been reopened.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="panel" id="daily">
+          <h3>Opened and closed per day <span class="kind">bar chart</span></h3>
+          <p>Uses the same two calls as the panels above, grouped by calendar day.</p>
+          <dl class="calc">
+            <dt>Opened (blue)</dt><dd>Tickets raised that day, grouped on the date part of <code>dateoccurred</code>.</dd>
+            <dt>Closed (orange)</dt><dd>Tickets closed that day, grouped on the date part of <code>dateclosed</code>.</dd>
+            <dt>Legend totals</dt><dd>These match <em>Opened</em> in the first panel and <em>Closed</em> in <em>All closures</em>.</dd>
+          </dl>
+          <div class="compare"><b>When comparing</b>
+            <ul>
+              <li>Days are <strong>UTC dates</strong>, as Halo stores them. During BST, a ticket raised between 00:00 and 01:00 counts towards the previous day.</li>
+              <li>Days with nothing opened or closed, usually weekends, are left out rather than shown as zero.</li>
+            </ul>
+          </div>
+        </article>
+      </section>
+
+      <section class="group">
+        <div class="section-head">
+          <h2>Right now</h2>
+          <p>These panels show the current state of every open ticket and ignore the time picker. A ticket raised two years ago that is still open is counted.</p>
+        </div>
+
+        <article class="panel" id="status">
+          <h3>Open tickets by status <span class="kind">stat · 9 numbers</span></h3>
+          <p>One API call fetches every ticket Halo counts as open. The dashboard keeps the selected team(s) and counts them by status ID.</p>
+          <dl class="calc">
+            <dt>Total open</dt><dd>Every open ticket in the selected team(s).</dd>
+            <dt>One tile per status</dt><dd>New (1), Scheduled (23), In Progress (2), Updated (22), With User (4), Approved (18), On Hold (21).</dd>
+            <dt>Other</dt><dd>Open tickets in any status not listed, such as With Supplier, Rejected or Awaiting Change Review. The tiles always add up to Total open.</dd>
+          </dl>
+          <code class="api">GET /api/Tickets?open_only=true&amp;count=10000</code>
+          <div class="compare"><b>When comparing</b>
+            <ul>
+              <li>Statuses are matched by ID, so renaming a status in Halo does not change the counts.</li>
+              <li>Halo counts <strong>Rejected</strong> as open, so rejected tickets fall into Other and Total open.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="panel" id="agent">
+          <h3>Open tickets per agent <span class="kind">stacked bar chart</span></h3>
+          <p>Uses the same open-ticket call, grouped by the <strong>currently assigned</strong> agent, with the same status breakdown as the tiles. Sorted by total, highest first.</p>
+          <dl class="calc">
+            <dt>Agent names</dt><dd>Tickets carry only an agent ID. Names come from Halo's agent list (<code>/api/Agent</code>), loaded once when the dashboard opens.</dd>
+            <dt>Unassigned</dt><dd>Tickets assigned to Halo's placeholder agent (ID 1).</dd>
+            <dt>Agent &lt;id&gt;</dt><dd>An agent ID not found in the agent list, e.g. a deleted agent.</dd>
+          </dl>
+          <div class="compare"><b>When comparing</b>
+            <ul>
+              <li>This counts who holds the ticket now, not who worked on it or who closed it this month.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="panel" id="agenttable">
+          <h3>Open tickets per agent (numbers) <span class="kind">table</span></h3>
+          <p>The same data as the chart, reused rather than queried again. It adds a <strong>Total</strong> column per agent and a <strong>TOTAL</strong> row, which equals Total open in <a href="#status">Open tickets by status</a>.</p>
+        </article>
+
+        <article class="panel" id="waiting">
+          <h3>Waiting: On Hold and With User <span class="kind">table</span></h3>
+          <p>Uses the same open-ticket call, keeping only On Hold (21) and With User (4) tickets in the selected team(s). One row per ticket, longest since the last action first.</p>
+          <dl class="calc">
+            <dt>Days since last action</dt><dd><span class="formula">now − lastactiondate</span>, in whole days, rounded down. Any action on the ticket resets it, including one that doesn't change its status.</dd>
+            <dt>Opened</dt><dd>The ticket's raised date (<code>dateoccurred</code>).</dd>
+            <dt>Agent</dt><dd>The currently assigned agent, named the same way as the per-agent panels.</dd>
+            <dt>Ticket</dt><dd>Links to the ticket in Halo.</dd>
+          </dl>
+          <div class="compare"><b>When comparing</b>
+            <ul>
+              <li>The row count equals On Hold plus With User in <a href="#status">Open tickets by status</a>.</li>
+            </ul>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <p>If a figure doesn't match, note the panel, the team and month selected, and the figure you expected with its source (for example a Halo report and its filters). Pulling that exact slice from the API usually shows which rule above explains the difference.</p>
+  </footer>
+</div>
+</body>
+</html>
